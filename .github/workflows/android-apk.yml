@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   build:
@@ -24,13 +23,13 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Android platform files if missing
+      - name: Generate Android platform
         run: |
           if [ ! -f android/settings.gradle ] && [ ! -f android/settings.gradle.kts ]; then
-            flutter create . --platforms=android --org com.primeanime
+            flutter create . --project-name prime_anime --platforms=android --org com.primeanime
           fi
 
-      - name: Configure app label and internet permission
+      - name: Configure app
         run: |
           sed -i 's/android:label="prime_anime"/android:label="Prime Anime"/' android/app/src/main/AndroidManifest.xml
           grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml || sed -i '/<application/i\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
@@ -38,11 +37,14 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build release APK
+      - name: Build APK
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: flutter build apk --release --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+        run: |
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -50,4 +52,3 @@ jobs:
           name: Prime-Anime-APK
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
-          
